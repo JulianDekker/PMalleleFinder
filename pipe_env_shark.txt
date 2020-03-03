@@ -1,0 +1,8 @@
+#!/bin/bash
+
+module unload python/2.7.6
+module load python/3.7.1
+module load conda3
+module load R/3.6.1
+source activate _pipeenv2
+export LD_LIBRARY_PATH=/home/jjdekker1/anaconda3/lib/

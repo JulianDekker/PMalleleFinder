@@ -1,0 +1,6 @@
+running under python=3.7.1
+
+biopython=1.76
+BCBio.gff=0.6.6
+pandas=1.0.1
+numpy=1.18.1
