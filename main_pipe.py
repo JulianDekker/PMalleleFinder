@@ -12,6 +12,10 @@ now = datetime.now()
 date_time = now.strftime("%Y%m%d%H%M%S")
 
 def hap_seq(genelist):
+    """
+    Creates alleles for all variants in the haplotype files.
+    input: genelist
+    """
     print("Generating allele sequence files..")
     bashCommand = 'mkdir output/sequences/'+date_time
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
@@ -362,11 +366,14 @@ def main():
     --popfile=inputpopfile
     --ref=ref.fasta
     --filter=filterlist
+    --threshold=integer
+
     gff is a valid annotation file in gencode format
     vcf requires a vcf.gz and requires a vcf.tbi to be present. needs to be two filenames in quotes.
     popfile is a tab seperated file containing sample and populaltion information: SampleID Pop Superpop
     ref is the reference genome in fasta format.
     filter is an optional argument to filter on a set of genes.
+    threshold is an integer defining the minimum support a allele must have to be saved in the HAP file.
     :return:
     """
     gff, vcf, populationfile, ref = '', '', '', ''
@@ -394,12 +401,14 @@ TR allele pipeline:
 --popfile=inputpopfile
 --ref=ref.fasta
 --filter=filterlist
+--threshold=integer
 
 gff is a valid annotation file in gencode format
 vcf requires a vcf.gz and requires a vcf.tbi to be present. needs to be two filenames in quotes.
 popfile is a tab seperated file containing sample and populaltion information: SampleID Pop Superpop
 ref is the reference genome in fasta format.
 filter is an optional argument to filter on a set of genes.
+threshold is an integer defining the minimum support a allele must have to be saved in the HAP file.
             """)
 
     if gff == '' or vcf == '' or len(vcf.split(';')) != 2 or populationfile == '' or ref == '':
@@ -430,7 +439,7 @@ filter is an optional argument to filter on a set of genes.
  |_|    |_|_| |_|_|___/_| |_|\___|\__,_|
  =======================================                               
         """)
-        print("Output folder: "+ date_time)
+        print("Output ID: "+ date_time)
     #print(genepos)
 
 
