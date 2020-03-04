@@ -390,7 +390,7 @@ def main():
             ref = arguments.split('=')[1]
         if arguments.startswith('--filter'):
             filterfile = [x.strip() for x in open(arguments.split('=')[1], 'r').readlines()]
-        if arguments.startswith('--treshold'):
+        if arguments.startswith('--threshold'):
             threshold = str(arguments.split('=')[1])
         if arguments.startswith('--help'):
             print("""
