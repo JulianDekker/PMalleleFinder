@@ -2,7 +2,7 @@ args <- commandArgs(trailingOnly = TRUE)
 popfile = args[1]
 ped1 = args[2]
 ped2 = args[3]
-thresh= args[4]
+thresh= as.numeric(args[4])
 population=read.table(popfile, header=TRUE)
 
 d1=read.table(paste0(ped1 ,".vcf.ped"), colClasses = "character")

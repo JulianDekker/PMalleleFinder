@@ -4,7 +4,7 @@ ped1 = args[2]
 ped2 = args[3]
 ped3 = args[4]
 ped4 = args[5]
-thresh = args[6]
+thresh = as.numeric(args[6])
 population=read.table(popfile, header=TRUE)
 
 d1=read.table(paste0(ped1 ,".vcf.ped"), colClasses = "character")

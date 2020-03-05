@@ -33,7 +33,7 @@ def report(genelist, nopedlist, filter, threshold):
             except:
                 mutated_pos = 0
             reportlist.append([gene.get_name(), len(seqs), mutated_pos])
-        report.write("--report job: "+date_time+"---\n\ntotal gene count: "+str(len(genelist))+"\ntotal allele count: "+ str(sequences_total)
+        report.write("--Report job: "+date_time+"---\n\nTotal gene count: "+str(len(genelist))+"\nTotal allele count: "+ str(sequences_total)
                      + "\nSkipped exons (no variation): "+str(len(nopedlist))+"\nThreshold: "+str(threshold)+"\n")
         if filter:
             report.write("Applied filters: ["+",".join(filter)+"]\n")
