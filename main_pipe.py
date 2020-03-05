@@ -50,8 +50,6 @@ def hap_seq(genelist):
             open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
             with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
                 for i in range(len(h1)): #
-                    print('test', gene.get_exons())
-                    print(gene.get_exons()[list(gene.get_exons().keys())[0]][2])
                     if gene.get_exons()[list(gene.get_exons().keys())[0]][2] == -1:
                         output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" +
                                      str(Seq(str(h1[i])).reverse_complement() + "\n"))
