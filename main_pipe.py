@@ -1,5 +1,6 @@
 import Bio
 from Bio import SeqIO
+from Bio.Seq import Seq
 from BCBio import GFF
 import sys
 import pprint
@@ -49,8 +50,11 @@ def hap_seq(genelist):
             open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
             with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
                 for i in range(len(h1)): #
-                    if gene.get_exons()[list(gene.get_exons().keys())[0]] == -1:
-                        output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" + str(h1[i])[::-1] + "\n")
+                    print('test', gene.get_exons())
+                    print(gene.get_exons()[list(gene.get_exons().keys())[0]][2])
+                    if gene.get_exons()[list(gene.get_exons().keys())[0]][2] == -1:
+                        output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" +
+                                     str(Seq(str(h1[i])).reverse_complement() + "\n"))
                     else:
                         output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" + str(h1[i]) + "\n")
                     #print('writing result to: output/reffasta/seq/' + gene.get_name())
@@ -60,8 +64,8 @@ def hap_seq(genelist):
                 seq = ''
                 for sequence in ref:
                     seq += str(sequence.seq)
-                if gene.get_exons()[list(gene.get_exons().keys())[0]] == -1:
-                    seq = seq[::-1]
+                if gene.get_exons()[list(gene.get_exons().keys())[0]][2] == -1:
+                    seq = str(Seq(seq).reverse_complement())
                 output.write(">" + gene.get_name() + "_" + str(1) + "\n" + (seq) + "\n")
                 #print('writing result to: output/reffasta/seq/' + gene.get_name())
 
