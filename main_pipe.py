@@ -13,13 +13,50 @@ now = datetime.now()
 date_time = now.strftime("%Y%m%d%H%M%S")
 
 
+def get_rss(genelist):
+    """
+    Creates position objects for rss sequences
+    :param genelist:
+    :return:
+    """
+    rsslist = []
+    for gene in genelist:
+        boundaries = gene.get_gene_boundaries()
+        if gene.get_name()[3] == 'V':
+            rsslist = rsslist + [(gene.get_name() + '_f_rss', (int(boundaries[1]), int(boundaries[1]) + 60,
+                                                      gene.get_exons()[list(gene.get_exons().keys())[0]][2]),
+                                 'RSS', gene.get_chro(), "1")]
+        elif gene.get_name()[3] == 'J':
+            rsslist = rsslist + [(gene.get_name()+'_r_rss', (int(boundaries[0])-60, int(boundaries[0]),
+                                                    gene.get_exons()[list(gene.get_exons().keys())[0]][2]),
+                                 'RSS', gene.get_chro(), "1")]
+        elif gene.get_name()[3] == 'D':
+            rsslist = rsslist + [(gene.get_name()+'_f_rss', (int(boundaries[0])-60, int(boundaries[0]),
+                                                    gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS', gene.get_chro(), "1"),
+                    (gene.get_name()+'_r_rss', (int(boundaries[1]), int(boundaries[1])+60,
+                                                gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS', gene.get_chro(), "1")]
+    return rsslist
+
+
+def make_all_fasta():
+    """
+    reads all fasta files in output directory and compiles them into a multi fasta file
+    :return:
+    """
+    import glob
+    read_files = glob.glob('output/sequences/' + date_time + '/*.fasta')
+    with open('output/sequences/' + date_time + '/'+ date_time + '_all.fasta', "wb") as outfile:
+        for f in read_files:
+            with open(f, "rb") as infile:
+                outfile.write(infile.read())
+
+
 def report(genelist, nopedlist, filter, threshold):
     """
     writes a report from the pipeline analysis
-    :param genelist:
-    :param nopedlist:
     :return:
     """
+    print("Reporting results..")
     with open('output/report_'+date_time+'.txt', 'a') as report:
         sequences_total = 0
         reportlist = []
@@ -295,6 +332,12 @@ def cutFasta(genpos, fasta):
 
 
 def extract_pos(gff, filter=None):
+    """
+    retrieves information from gff files, also is able to filter on certain genes.
+    :param gff:
+    :param filter:
+    :return:
+    """
     print("Processing gencode annotation..")
     if filter:
         print('Filtering on: ', filter)
@@ -387,10 +430,88 @@ def discarditem(genlist, item):
 
 
 def in_genelist(genelist, name):
+    """
+    checks if a name is in a list of gene objects
+    :param genelist:
+    :param name:
+    :return:
+    """
     for i in genelist:
         if i.get_name() == name:
             return True
     return False
+
+
+def run_normal(genepos, vcf, ref, populationfile, filterfile, threshold):
+    """
+    Run TR diversity normally
+    :param genepos:
+    :param vcf:
+    :param ref:
+    :param populationfile:
+    :param filterfile:
+    :param threshold:
+    :return:
+    """
+    genelist = []
+    for pos in genepos:
+        if in_genelist(genelist, pos[0]):
+            for i in genelist:
+                if i.get_name() == pos[0]:
+                    i.add_exon(pos[4], pos[1])
+                    break
+        else:
+            genelist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}, chro=pos[3]))
+    cutVCF(genepos, vcf)
+    cutFasta(genepos, ref)
+    get_rss(genelist)
+    nopedlist = vcf2ped(genepos, populationfile)
+    ped2hap(genelist, populationfile, nopedlist, threshold)
+    hap_seq(genelist)
+    make_all_fasta()
+    report(genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
+
+
+def run_rss(genepos, vcf, ref, populationfile, filterfile, threshold):
+    """
+    Run TR diversity with RSS sequences included
+    :param genepos:
+    :param vcf:
+    :param ref:
+    :param populationfile:
+    :param filterfile:
+    :param threshold:
+    :return:
+    """
+    genelist = []
+    for pos in genepos:
+        if in_genelist(genelist, pos[0]):
+            for i in genelist:
+                if i.get_name() == pos[0]:
+                    i.add_exon(pos[4], pos[1])
+                    break
+        else:
+            genelist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}, chro=pos[3]))
+    rsspos = get_rss(genelist)
+    rsslist = []
+    for pos in rsspos:
+        if in_genelist(rsslist, pos[0]):
+            for i in rsslist:
+                if i.get_name() == pos[0]:
+                    i.add_exon(pos[4], pos[1])
+                    break
+        else:
+            rsslist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}))
+    genelist = genelist + rsslist
+    cutVCF(genepos+rsspos, vcf)
+    cutFasta(genepos+rsspos, ref)
+    get_rss(genelist)
+    nopedlist = vcf2ped(genepos+rsspos, populationfile)
+    ped2hap(genelist, populationfile, nopedlist, threshold)
+    hap_seq(genelist)
+    make_all_fasta()
+    report(genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
+
 
 def main():
     """
@@ -448,21 +569,8 @@ threshold is an integer defining the minimum support a allele must have to be sa
         print("Not enough arguments to run.\n\nPlease make sure to specify:\n\t--vcf=\"input1.vcf;input2.vcf\"\n\t--gff=input.gff\n\t--popfile=inputpopfile\n\t--ref=ref.fasta\nIn the command line options.")
     else:
         genepos = extract_pos(gff, filterfile)
-        genelist = []
-        for pos in genepos:
-            if in_genelist(genelist, pos[0]):
-                for i in genelist:
-                    if i.get_name() == pos[0]:
-                        i.add_exon(pos[4], pos[1])
-                        break
-            else:
-                genelist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}))
-        cutVCF(genepos, vcf)
-        cutFasta(genepos, ref)
-        nopedlist = vcf2ped(genepos, populationfile)
-        ped2hap(genelist, populationfile, nopedlist, threshold)
-        hap_seq(genelist)
-        report(genelist, nopedlist, filterfile, threshold) #add filter
+        #run_normal(genepos, vcf, ref, populationfile, filterfile, threshold)
+        run_rss(genepos, vcf, ref, populationfile, filterfile, threshold)
         print("""
 ========================================
   ______ _       _     _              _ 
