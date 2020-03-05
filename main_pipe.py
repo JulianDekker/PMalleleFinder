@@ -12,6 +12,37 @@ from datetime import datetime
 now = datetime.now()
 date_time = now.strftime("%Y%m%d%H%M%S")
 
+
+def report(genelist, nopedlist, filter, threshold):
+    """
+    writes a report from the pipeline analysis
+    :param genelist:
+    :param nopedlist:
+    :return:
+    """
+    with open('output/report_'+date_time+'.txt', 'a') as report:
+        sequences_total = 0
+        reportlist = []
+        for gene in genelist:
+            seqs = [seq for seq in SeqIO.parse(open('output/sequences/'+date_time+'/'+gene.get_name()+'.fasta'), 'fasta')]
+            sequences_total += len(seqs)
+            try:
+                with open('output/vcf/' + date_time + '/' + gene.get_name() + '-py.csv', 'r') as pos:
+                    line = pos.readline().strip()
+                    mutated_pos = len(line.split(','))
+            except:
+                mutated_pos = 0
+            reportlist.append([gene.get_name(), len(seqs), mutated_pos])
+        report.write("--report job: "+date_time+"---\n\ntotal gene count: "+str(len(genelist))+"\ntotal allele count: "+ str(sequences_total)
+                     + "\nSkipped exons (no variation): "+str(len(nopedlist))+"\nThreshold: "+str(threshold)+"\n")
+        if filter:
+            report.write("Applied filters: ["+",".join(filter)+"]\n")
+        report.write('\nGene\talleles\tmutated_positions\n')
+        for i in reportlist:
+            report.write(str(i[0])+'\t'+str(i[1])+'\t'+ str(i[2])+'\n')
+
+
+
 def hap_seq(genelist):
     """
     Creates alleles for all variants in the haplotype files.
@@ -431,6 +462,7 @@ threshold is an integer defining the minimum support a allele must have to be sa
         nopedlist = vcf2ped(genepos, populationfile)
         ped2hap(genelist, populationfile, nopedlist, threshold)
         hap_seq(genelist)
+        report(genelist, nopedlist, filterfile, threshold) #add filter
         print("""
 ========================================
   ______ _       _     _              _ 
