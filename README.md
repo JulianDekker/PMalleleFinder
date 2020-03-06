@@ -7,7 +7,7 @@
 * [Command line options](#Command-line-options)
 
 ## General info
-This pipeline will allow you to extract allele sequences and population information for TR genes.
+This pipeline will allow you to extract allele sequences and population information for *TR* genes.
 	
 ## Requirements
 * python=3.7.1
