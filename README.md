@@ -27,7 +27,7 @@ Example usage:
 $ python3 main_pipe.py --gff=gencode.v32.chr_patch_hapl_scaff.annotation.gff3 --vcf="ALL.chr7.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz;ALL.chr14.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz" --popfile=pop-info.tsv --ref=GRCh38_full_analysis_set_plus_decoy_hla.fa
 ```
 
-## Command line options:
+## Command line options
 * `--gff=gencodefile` **required**
 This option required a .gff or .gff3 input file to read gene locations from
 * `--vcf=vcffile.vcf` **required**
