@@ -463,7 +463,6 @@ def run_normal(genepos, vcf, ref, populationfile, filterfile, threshold):
             genelist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}, chro=pos[3]))
     cutVCF(genepos, vcf)
     cutFasta(genepos, ref)
-    get_rss(genelist)
     nopedlist = vcf2ped(genepos, populationfile)
     ped2hap(genelist, populationfile, nopedlist, threshold)
     hap_seq(genelist)
@@ -520,7 +519,7 @@ def main():
     --ref=ref.fasta
     --filter=filterlist
     --threshold=integer
-
+    --rss=TRUE|FALSE
     gff is a valid annotation file in gencode format
     vcf requires a vcf.gz and requires a vcf.tbi to be present. needs to be two filenames in quotes.
     popfile is a tab seperated file containing sample and populaltion information: SampleID Pop Superpop
@@ -531,6 +530,7 @@ def main():
     """
     gff, vcf, populationfile, ref = '', '', '', ''
     filterfile = None
+    rss = False
     threshold = '4'
     for arguments in sys.argv:
         if arguments.startswith('--gff'):
@@ -545,6 +545,10 @@ def main():
             filterfile = [x.strip() for x in open(arguments.split('=')[1], 'r').readlines()]
         if arguments.startswith('--threshold'):
             threshold = str(arguments.split('=')[1])
+        if arguments.startswith('--rss'):
+            rss = arguments.split('=')[1]
+            if rss.upper() == "TRUE":
+                rss = True
         if arguments.startswith('--help'):
             print("""
 TR allele pipeline:
@@ -555,6 +559,7 @@ TR allele pipeline:
 --ref=ref.fasta
 --filter=filterlist
 --threshold=integer
+--rss=TRUE|FALSE
 
 gff is a valid annotation file in gencode format
 vcf requires a vcf.gz and requires a vcf.tbi to be present. needs to be two filenames in quotes.
@@ -562,14 +567,17 @@ popfile is a tab seperated file containing sample and populaltion information: S
 ref is the reference genome in fasta format.
 filter is an optional argument to filter on a set of genes.
 threshold is an integer defining the minimum support a allele must have to be saved in the HAP file.
+rss is the option to enable generating rss sequences as well.
             """)
 
     if gff == '' or vcf == '' or len(vcf.split(';')) != 2 or populationfile == '' or ref == '':
         print("Not enough arguments to run.\n\nPlease make sure to specify:\n\t--vcf=\"input1.vcf;input2.vcf\"\n\t--gff=input.gff\n\t--popfile=inputpopfile\n\t--ref=ref.fasta\nIn the command line options.")
     else:
         genepos = extract_pos(gff, filterfile)
-        #run_normal(genepos, vcf, ref, populationfile, filterfile, threshold)
-        run_rss(genepos, vcf, ref, populationfile, filterfile, threshold)
+        if rss:
+            run_rss(genepos, vcf, ref, populationfile, filterfile, threshold)
+        else:
+            run_normal(genepos, vcf, ref, populationfile, filterfile, threshold)
         print("""
 ========================================
   ______ _       _     _              _ 
