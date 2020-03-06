@@ -98,8 +98,6 @@ def hap_seq(genelist):
             values = values + list(seq.seq)
             for i in range(int(start), int(stop) + 1):
                 keys.append(str(i))
-        print(keys)
-        print(values)
         try:
             with open('output/vcf/'+ date_time + '/' + gene.get_name() + '-py.csv', 'r') as n:  # Open the file
                 lines = n.readlines()   # Read all the lines in the CSV file, with each line as a
