@@ -79,7 +79,6 @@ def report(genelist, nopedlist, filter, threshold):
             report.write(str(i[0])+'\t'+str(i[1])+'\t'+ str(i[2])+'\n')
 
 
-
 def hap_seq(genelist):
     """
     Creates alleles for all variants in the haplotype files.
@@ -99,6 +98,8 @@ def hap_seq(genelist):
             values = values + list(seq.seq)
             for i in range(int(start), int(stop) + 1):
                 keys.append(str(i))
+        print(keys)
+        print(values)
         try:
             with open('output/vcf/'+ date_time + '/' + gene.get_name() + '-py.csv', 'r') as n:  # Open the file
                 lines = n.readlines()   # Read all the lines in the CSV file, with each line as a
@@ -355,12 +356,12 @@ def extract_pos(gff, filter=None):
                         if f.type == 'CDS':
                             if containCDSGENE(genlist, f.qualifiers['gene_name'][0], 'gene'):
                                 genlist = discarditem(genlist, f.qualifiers['gene_name'][0])
-                            genlist.add((f.qualifiers['gene_name'][0], (f.location.start, f.location.end,
+                            genlist.add((f.qualifiers['gene_name'][0], (f.location.start+1, f.location.end,
                                                                         f.location.strand), f.type, rec.id,
                                          f.qualifiers['exon_number'][0]))
                         elif f.type == 'gene':
                             if not containCDSGENE(genlist, f.qualifiers['gene_name'][0], 'CDS'):
-                                genlist.add((f.qualifiers['gene_name'][0], (f.location.start, f.location.end,
+                                genlist.add((f.qualifiers['gene_name'][0], (f.location.start+1, f.location.end,
                                                                             f.location.strand), f.type, rec.id,
                                              f.qualifiers['exon_number'][0]))
             else:
@@ -372,12 +373,12 @@ def extract_pos(gff, filter=None):
                     if feature.type == 'CDS':
                         if containCDSGENE(genlist, feature.qualifiers['gene_name'][0], 'gene'):
                             genlist = discarditem(genlist, feature.qualifiers['gene_name'][0])
-                        genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start, feature.location.end,
+                        genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start+1, feature.location.end,
                                                                           feature.location.strand), feature.type,
                                      rec.id, ex_number))
                     elif feature.type == 'gene':
                         if not containCDSGENE(genlist, feature.qualifiers['gene_name'][0], 'CDS'):
-                            genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start,
+                            genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start+1,
                                                                               feature.location.end,
                                                                               feature.location.strand), feature.type,
                                          rec.id, ex_number))
