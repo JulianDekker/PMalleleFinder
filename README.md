@@ -22,7 +22,7 @@ This pipeline will allow you to extract allele sequences and population informat
 ## Setup
 Clone the project structure and run `main_pipe.py`
 
-Example:
+Example usage:
 ```
 $ python3 main_pipe.py --gff=gencode.v32.chr_patch_hapl_scaff.annotation.gff3 --vcf="ALL.chr7.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz;ALL.chr14.shapeit2_integrated_snvindels_v2a_27022019.GRCh38.phased.vcf.gz" --popfile=pop-info.tsv --ref=GRCh38_full_analysis_set_plus_decoy_hla.fa
 ```
