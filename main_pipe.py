@@ -32,9 +32,11 @@ def get_rss(genelist):
                                  'RSS', gene.get_chro(), "1")]
         elif gene.get_name()[3] == 'D':
             rsslist = rsslist + [(gene.get_name()+'_f_rss', (int(boundaries[0])-60, int(boundaries[0]),
-                                                    gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS', gene.get_chro(), "1"),
+                                                    gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS',
+                                  gene.get_chro(), "1"),
                     (gene.get_name()+'_r_rss', (int(boundaries[1]), int(boundaries[1])+60,
-                                                gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS', gene.get_chro(), "1")]
+                                                gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS',
+                     gene.get_chro(), "1")]
     return rsslist
 
 
@@ -51,7 +53,7 @@ def make_all_fasta():
                 outfile.write(infile.read())
 
 
-def report(genelist, nopedlist, filter, threshold):
+def report(gff, vcf, ref, populationfile, genelist, nopedlist, filter, threshold):
     """
     writes a report from the pipeline analysis
     :return:
@@ -61,7 +63,8 @@ def report(genelist, nopedlist, filter, threshold):
         sequences_total = 0
         reportlist = []
         for gene in genelist:
-            seqs = [seq for seq in SeqIO.parse(open('output/sequences/'+date_time+'/'+gene.get_name()+'.fasta'), 'fasta')]
+            seqs = [seq for seq in SeqIO.parse(open('output/sequences/'+date_time+'/'+gene.get_name()+'.fasta'),
+                                               'fasta') if 'rss' not in gene.get_name()]
             sequences_total += len(seqs)
             try:
                 with open('output/vcf/' + date_time + '/' + gene.get_name() + '-py.csv', 'r') as pos:
@@ -69,8 +72,16 @@ def report(genelist, nopedlist, filter, threshold):
                     mutated_pos = len(line.split(','))
             except:
                 mutated_pos = 0
-            reportlist.append([gene.get_name(), len(seqs), mutated_pos])
-        report.write("--Report job: "+date_time+"---\n\nTotal gene count: "+str(len(genelist))+"\nTotal allele count: "+ str(sequences_total)
+            if 'rss' in gene.get_name():
+                seqs = [seq for seq in
+                        SeqIO.parse(open('output/sequences/' + date_time + '/' + gene.get_name() + '.fasta'), 'fasta')]
+                reportlist.append([gene.get_name(), len(seqs), mutated_pos])
+            else:
+                reportlist.append([gene.get_name(), len(seqs), mutated_pos])
+        genecount = len([i for i in genelist if 'rss' not in i.get_name()])
+        report.write("--Report job: "+date_time+"---\n\nGff file: "+gff+"\nVcf files: "+vcf+"\nReference fasta: "+ref +
+                     "\nPopulation file: "+populationfile+"\n\nTotal gene count: "+str(genecount)+
+                     "\nTotal allele count: "+ str(sequences_total)
                      + "\nSkipped exons (no variation): "+str(len(nopedlist))+"\nThreshold: "+str(threshold)+"\n")
         if filter:
             report.write("Applied filters: ["+",".join(filter)+"]\n")
@@ -149,7 +160,8 @@ def ped2hap(genelist, popfile, nopedlist, threshold):
         nexon = len(exons)
 
         if nexon == 1:
-            bashCommand = 'Rscript scripts/Ped2Hap_shark.R '+popfile+' '+prefix+genes.get_name()+'-exon'+exons[0]+' '+threshold
+            bashCommand = 'Rscript scripts/Ped2Hap_shark.R '+popfile+' '+prefix+genes.get_name()+'-exon'+exons[0]+' ' +\
+                          threshold
             process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
         elif nexon == 2:
@@ -441,7 +453,7 @@ def in_genelist(genelist, name):
     return False
 
 
-def run_normal(genepos, vcf, ref, populationfile, filterfile, threshold):
+def run_normal(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
     """
     Run TR diversity normally
     :param genepos:
@@ -467,10 +479,10 @@ def run_normal(genepos, vcf, ref, populationfile, filterfile, threshold):
     ped2hap(genelist, populationfile, nopedlist, threshold)
     hap_seq(genelist)
     make_all_fasta()
-    report(genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
+    report(gff, vcf, ref, populationfile, genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
 
 
-def run_rss(genepos, vcf, ref, populationfile, filterfile, threshold):
+def run_rss(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
     """
     Run TR diversity with RSS sequences included
     :param genepos:
@@ -508,7 +520,7 @@ def run_rss(genepos, vcf, ref, populationfile, filterfile, threshold):
     ped2hap(genelist, populationfile, nopedlist, threshold)
     hap_seq(genelist)
     make_all_fasta()
-    report(genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
+    report(gff, vcf, ref, populationfile, genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
 
 
 def main():
@@ -575,9 +587,9 @@ rss is the option to enable generating rss sequences as well.
     else:
         genepos = extract_pos(gff, filterfile)
         if rss:
-            run_rss(genepos, vcf, ref, populationfile, filterfile, threshold)
+            run_rss(gff, genepos, vcf, ref, populationfile, filterfile, threshold)
         else:
-            run_normal(genepos, vcf, ref, populationfile, filterfile, threshold)
+            run_normal(gff, genepos, vcf, ref, populationfile, filterfile, threshold)
         print("""
 ========================================
   ______ _       _     _              _ 
