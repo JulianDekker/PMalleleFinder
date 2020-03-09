@@ -23,8 +23,6 @@ myfun <- function(filename) {
   write.csv(d4[,-c(1:5), drop=F],newfile1, row.names = FALSE, quote=FALSE)
 }
 
-print(name)
-print(paste0(name, "-HAP.xls"))
 files = list.files(pattern=paste0(name, "-Hap.xls"))
 #files = list.files(pattern="TRAV22-201-exon1-Hap.xls")
 invisible(lapply(files, myfun))
