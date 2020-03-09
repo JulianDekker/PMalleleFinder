@@ -90,106 +90,86 @@ def report(gff, vcf, ref, populationfile, genelist, nopedlist, filter, threshold
             report.write(str(i[0])+'\t'+str(i[1])+'\t'+ str(i[2])+'\n')
 
 
-def hap_seq(genelist):
+def hap_seq(gene):
     """
     Creates alleles for all variants in the haplotype files.
     input: genelist
     """
-    print("Generating allele sequence files..")
-    bashCommand = 'mkdir output/sequences/'+date_time
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
-    for gene in genelist:
-        keys = []
-        values = []
-        ref = SeqIO.parse(open('output/reffasta/'+date_time+'/'+gene.get_name()+'.fasta'), 'fasta')
-        ref = [seq for seq in ref]
-        for seq in ref:
-            start, stop = seq.id.split(':')[1].split('-')
-            values = values + list(seq.seq)
-            for i in range(int(start), int(stop) + 1):
-                keys.append(str(i))
-        try:
-            with open('output/vcf/'+ date_time + '/' + gene.get_name() + '-py.csv', 'r') as n:  # Open the file
-                lines = n.readlines()   # Read all the lines in the CSV file, with each line as a
-            h = []
-            for j in lines:
-                h.append(j.split()[0].split(","))  # Split each line in into strings based on delimiters
+    keys = []
+    values = []
+    ref = SeqIO.parse(open('output/reffasta/'+date_time+'/'+gene.get_name()+'.fasta'), 'fasta')
+    ref = [seq for seq in ref]
+    for seq in ref:
+        start, stop = seq.id.split(':')[1].split('-')
+        values = values + list(seq.seq)
+        for i in range(int(start), int(stop) + 1):
+            keys.append(str(i))
+    try:
+        with open('output/vcf/'+ date_time + '/' + gene.get_name() + '-py.csv', 'r') as n:  # Open the file
+            lines = n.readlines()   # Read all the lines in the CSV file, with each line as a
+        h = []
+        for j in lines:
+            h.append(j.split()[0].split(","))  # Split each line in into strings based on delimiters
 
-            indices = [keys.index(i.split('.')[0]) for i in h[0]]
-            h1 = []
-            for y in range(1, len(h)):
-                l1new = values
-                for i, j in zip(indices, h[y]):
-                    l1new[i] = j
-                h1.append(''.join(l1new))
-            h1.append(''.join(values))
-            h1 = list(sorted(set(h1), key=h1.index))
-            open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
-            with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
-                for i in range(len(h1)): #
-                    if gene.get_exons()[list(gene.get_exons().keys())[0]][2] == -1:
-                        output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" +
-                                     str(Seq(str(h1[i])).reverse_complement() + "\n"))
-                    else:
-                        output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" + str(h1[i]) + "\n")
-                    #print('writing result to: output/reffasta/seq/' + gene.get_name())
-        except:
-            open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
-            with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
-                seq = ''
-                for sequence in ref:
-                    seq += str(sequence.seq)
+        indices = [keys.index(i.split('.')[0]) for i in h[0]]
+        h1 = []
+        for y in range(1, len(h)):
+            l1new = values
+            for i, j in zip(indices, h[y]):
+                l1new[i] = j
+            h1.append(''.join(l1new))
+        h1.append(''.join(values))
+        h1 = list(sorted(set(h1), key=h1.index))
+        open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
+        with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
+            for i in range(len(h1)): #
                 if gene.get_exons()[list(gene.get_exons().keys())[0]][2] == -1:
-                    seq = str(Seq(seq).reverse_complement())
-                output.write(">" + gene.get_name() + "_" + str(1) + "\n" + (seq) + "\n")
-                #print('writing result to: output/reffasta/seq/' + gene.get_name())
+                    output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" +
+                                 str(Seq(str(h1[i])).reverse_complement() + "\n"))
+                else:
+                    output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" + str(h1[i]) + "\n")
+    except:
+        open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
+        with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
+            seq = ''
+            for sequence in ref:
+                seq += str(sequence.seq)
+            if gene.get_exons()[list(gene.get_exons().keys())[0]][2] == -1:
+                seq = str(Seq(seq).reverse_complement())
+            output.write(">" + gene.get_name() + "_" + str(1) + "\n" + (seq) + "\n")
 
 
-def ped2hap(genelist, popfile, nopedlist, threshold):
+def ped2hap(gene, popfile, nopedlist, threshold):
     """
     Creates haplotype files from ped files
     :param genelist:
     :return:
     """
-    print("Generating HAP files..")
     prefix = 'output/vcf/'+date_time+'/'
-    for genes in genelist:
-        exons = sorted(genes.get_exons().keys())
-        exons = [exon for exon in exons if genes.get_name()+'-exon'+str(exon) not in nopedlist]
-        nexon = len(exons)
-
-        if nexon == 1:
-            bashCommand = 'Rscript scripts/Ped2Hap_shark.R '+popfile+' '+prefix+genes.get_name()+'-exon'+exons[0]+' ' +\
-                          threshold
-            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
-        elif nexon == 2:
-            ex1, ex2, = prefix+genes.get_name() + '-exon' + exons[0], prefix+genes.get_name()+'-exon'+exons[1]
-            bashCommand = 'Rscript scripts/Hapmerge.R '+popfile+' '+ex1+' '+ex2+' '+threshold
-            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
-        elif nexon == 3:
-            ex1, ex2, ex3 = prefix+genes.get_name() + '-exon' + exons[0], \
-                            prefix+genes.get_name() + '-exon' + exons[1], \
-                            prefix+genes.get_name() + '-exon' + exons[2]
-            bashCommand = 'Rscript scripts/Hapmerge-ex3.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+threshold
-            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
-        elif nexon == 4:
-            ex1, ex2, ex3, ex4 = prefix+genes.get_name() + '-exon' + exons[0], \
-                                 prefix+genes.get_name() + '-exon' + exons[1], \
-                                 prefix+genes.get_name() + '-exon' + exons[2], \
-                                 prefix+genes.get_name() + '-exon' + exons[3]
-            bashCommand = 'Rscript scripts/Hapmerge-ex4.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+ex4+' '+threshold
-            process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-            output, error = process.communicate()
-        elif nexon > 4:
-            print(len(exons), exons)
-            raise ValueError("Too many exons to process")
-    bashCommand = 'Rscript scripts/CSV-Py-v2.R output/vcf/'+date_time+'/'
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    exons = sorted(gene.get_exons().keys())
+    exons = [exon for exon in exons if gene.get_name()+'-exon'+str(exon) not in nopedlist]
+    nexon = len(exons)
+    if nexon == 1:
+        command('Rscript scripts/Ped2Hap_shark.R '+popfile+' '+prefix+gene.get_name()+'-exon'+exons[0]+' ' +\
+                      threshold)
+    elif nexon == 2:
+        ex1, ex2, = prefix+gene.get_name() + '-exon' + exons[0], prefix+gene.get_name()+'-exon'+exons[1]
+        command('Rscript scripts/Hapmerge.R '+popfile+' '+ex1+' '+ex2+' '+threshold)
+    elif nexon == 3:
+        ex1, ex2, ex3 = prefix+gene.get_name() + '-exon' + exons[0], \
+                        prefix+gene.get_name() + '-exon' + exons[1], \
+                        prefix+gene.get_name() + '-exon' + exons[2]
+        command('Rscript scripts/Hapmerge-ex3.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+threshold)
+    elif nexon == 4:
+        ex1, ex2, ex3, ex4 = prefix+gene.get_name() + '-exon' + exons[0], \
+                             prefix+gene.get_name() + '-exon' + exons[1], \
+                             prefix+gene.get_name() + '-exon' + exons[2], \
+                             prefix+gene.get_name() + '-exon' + exons[3]
+        command('Rscript scripts/Hapmerge-ex4.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+ex4+' '+threshold)
+    elif nexon > 4:
+        print(len(exons), exons)
+        raise ValueError("Too many exons to process")
+    command('Rscript scripts/CSV-Py-v2.R output/vcf/'+date_time+'/ '+ gene.get_name())
 
 
 def vcf2ped(genpos, popfile):
@@ -285,7 +265,6 @@ def vcf2ped(genpos, popfile):
             dd.to_csv(filename + '.ped', header=False, sep='\t')
         except Exception as e:
             nopedlist.append(file[0] + "-exon" + str(file[4]))
-            #print("No variation found in: "+filename, e)
     return nopedlist
 
 
@@ -297,23 +276,17 @@ def cutVCF(genpos, vcf):
     :return:
     """
     print("Slicing VCF files..")
-    bashCommand = 'mkdir output/vcf/' + date_time
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    command('mkdir output/vcf/' + date_time)
     vcf7, vcf14 = vcf.split(';')
     for item in genpos:
         name, loc, type, chro, ex = item
+        output, error = '', ''
         if int(loc[0]) > int(loc[1]):
             loc = (loc[1], loc[0])
-        bashCommand = ''
         if chro == 'chr7':
-            bashCommand = "tabix -fh "+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1])
-            #print('Getting '+name+' from: '+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
+            output, error = command("tabix -fh "+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
         elif chro == 'chr14':
-            bashCommand = "tabix -fh " + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1])
-            #print('Getting ' + name + ' from: ' + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
+            output, error = command("tabix -fh " + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
         open('output/vcf/'+date_time+'/'+name+"-exon"+str(ex)+".vcf", 'wb').write(output)
 
 
@@ -325,9 +298,7 @@ def cutFasta(genpos, fasta):
     :return:
     """
     print("Slicing reference fasta..")
-    bashCommand = 'mkdir output/reffasta/' + date_time
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    command('mkdir output/reffasta/' + date_time)
     for item in genpos:
         name, loc, type, chro, ex = item
         open('output/reffasta/'+date_time+'/' + name + ".fasta", 'w').write('')
@@ -335,10 +306,7 @@ def cutFasta(genpos, fasta):
         name, loc, type, chro, ex = item
         if int(loc[0]) > int(loc[1]):
             loc = (loc[1], loc[0])
-        bashCommand = "samtools faidx "+fasta+" "+chro+":"+str(loc[0])+"-"+str(loc[1])
-        #print('Getting fasta for: '+name+' from: '+fasta+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
-        process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
+        output, error = command("samtools faidx "+fasta+" "+chro+":"+str(loc[0])+"-"+str(loc[1]))
         open('output/reffasta/'+date_time+'/'+name+".fasta", 'ab').write(output)
 
 
@@ -412,6 +380,17 @@ def containsTR(str, list=None):
     return False
 
 
+def command(command):
+    """
+    Creates a bash command
+    :param command:
+    :return:
+    """
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    return output, error
+
+
 def containCDSGENE(genlist, name, type):
     """
     checks if [CDS/GENE] exists in set for matching name
@@ -476,8 +455,11 @@ def run_normal(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
     cutVCF(genepos, vcf)
     cutFasta(genepos, ref)
     nopedlist = vcf2ped(genepos, populationfile)
-    ped2hap(genelist, populationfile, nopedlist, threshold)
-    hap_seq(genelist)
+    command('mkdir output/sequences/' + date_time)
+    print('generating HAP files and allele sequences..')
+    for genes in genelist:
+        ped2hap(genes, populationfile, nopedlist, threshold)
+        hap_seq(genes)
     make_all_fasta()
     report(gff, vcf, ref, populationfile, genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
 
@@ -517,8 +499,11 @@ def run_rss(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
     cutFasta(genepos+rsspos, ref)
     get_rss(genelist)
     nopedlist = vcf2ped(genepos+rsspos, populationfile)
-    ped2hap(genelist, populationfile, nopedlist, threshold)
-    hap_seq(genelist)
+    command('mkdir output/sequences/' + date_time)
+    print('generating HAP files and allele sequences..')
+    for genes in genelist:
+        ped2hap(genes, populationfile, nopedlist, threshold)
+        hap_seq(genes)
     make_all_fasta()
     report(gff, vcf, ref, populationfile, genelist, nopedlist, filterfile, threshold)  # add filtergenelist = []
 
@@ -601,7 +586,6 @@ rss is the option to enable generating rss sequences as well.
  =======================================                               
         """)
         print("Output ID: "+ date_time)
-    #print(genepos)
 
 
 main()
