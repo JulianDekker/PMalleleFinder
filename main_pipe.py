@@ -120,11 +120,12 @@ def hap_seq(genelist):
             h1 = []
             for y in range(1, len(h)):
                 l1new = values
+                print(indices, h[y])
                 for i, j in zip(indices, h[y]):
                     l1new[i] = j
                 h1.append(''.join(l1new))
             h1.append(''.join(values))
-            h1 = list(set(h1))
+            h1 = list(sorted(set(h1), key=h1.index))
             open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
             with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
                 for i in range(len(h1)): #
