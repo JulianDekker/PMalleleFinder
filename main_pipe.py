@@ -301,9 +301,6 @@ def cutFasta(genpos, fasta):
     command('mkdir output/reffasta/' + date_time)
     for item in genpos:
         name, loc, type, chro, ex = item
-        open('output/reffasta/'+date_time+'/' + name + ".fasta", 'w').write('')
-    for item in genpos:
-        name, loc, type, chro, ex = item
         if int(loc[0]) > int(loc[1]):
             loc = (loc[1], loc[0])
         output, error = command("samtools faidx "+fasta+" "+chro+":"+str(loc[0])+"-"+str(loc[1]))
