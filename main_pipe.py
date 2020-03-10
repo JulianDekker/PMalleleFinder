@@ -323,7 +323,7 @@ def extract_pos(gff, filter=None):
     in_handle = open(gff)
     limit_info = dict(
         gff_id=["chr7", "chr14"],
-        gff_type=['gene', 'CDS']
+        gff_type=['exon', 'CDS']
     )
     genlist = set()
     for rec in GFF.parse(in_handle, limit_info=limit_info):
@@ -337,7 +337,11 @@ def extract_pos(gff, filter=None):
                             genlist.add((f.qualifiers['gene_name'][0], (f.location.start+1, f.location.end,
                                                                         f.location.strand), f.type, rec.id,
                                          f.qualifiers['exon_number'][0]))
-                        elif f.type == 'gene':
+                            entries = [genname for genname in genlist if genname[0] == f.qualifiers['gene_name'][0]]
+                            for entry in entries:
+                                if entry[2] == 'exon':
+                                    genlist.remove(entry)
+                        elif f.type == 'exon':
                             if not containCDSGENE(genlist, f.qualifiers['gene_name'][0], 'CDS'):
                                 genlist.add((f.qualifiers['gene_name'][0], (f.location.start+1, f.location.end,
                                                                             f.location.strand), f.type, rec.id,
@@ -354,7 +358,11 @@ def extract_pos(gff, filter=None):
                         genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start+1, feature.location.end,
                                                                           feature.location.strand), feature.type,
                                      rec.id, ex_number))
-                    elif feature.type == 'gene':
+                        entries = [genname for genname in genlist if genname[0] == feature.qualifiers['gene_name'][0]]
+                        for entry in entries:
+                            if entry[2] == 'exon':
+                                genlist.remove(entry)
+                    elif feature.type == 'exon':
                         if not containCDSGENE(genlist, feature.qualifiers['gene_name'][0], 'CDS'):
                             genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start+1,
                                                                               feature.location.end,
