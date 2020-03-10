@@ -268,43 +268,37 @@ def vcf2ped(genpos, popfile):
     return nopedlist
 
 
-def cutVCF(genpos, vcf):
+def cutVCF(item, vcf):
     """
     cut's the vcf in pieces defined by genpos items
     :param genpos:
     :param vcf: vcf files for chr7 and 14 seperated by ;
     :return:
     """
-    print("Slicing VCF files..")
-    command('mkdir output/vcf/' + date_time)
     vcf7, vcf14 = vcf.split(';')
-    for item in genpos:
-        name, loc, type, chro, ex = item
-        output, error = '', ''
-        if int(loc[0]) > int(loc[1]):
-            loc = (loc[1], loc[0])
-        if chro == 'chr7':
-            output, error = command("tabix -fh "+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
-        elif chro == 'chr14':
-            output, error = command("tabix -fh " + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
-        open('output/vcf/'+date_time+'/'+name+"-exon"+str(ex)+".vcf", 'wb').write(output)
+    name, loc, type, chro, ex = item
+    output, error = '', ''
+    if int(loc[0]) > int(loc[1]):
+        loc = (loc[1], loc[0])
+    if chro == 'chr7':
+        output, error = command("tabix -fh "+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
+    elif chro == 'chr14':
+        output, error = command("tabix -fh " + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
+    open('output/vcf/'+date_time+'/'+name+"-exon"+str(ex)+".vcf", 'wb').write(output)
 
 
-def cutFasta(genpos, fasta):
+def cutFasta(item, fasta):
     """
     cut's the fasta in pieces defined by genpos items
     :param genpos:
     :param fasta: fasta reference file
     :return:
     """
-    print("Slicing reference fasta..")
-    command('mkdir output/reffasta/' + date_time)
-    for item in genpos:
-        name, loc, type, chro, ex = item
-        if int(loc[0]) > int(loc[1]):
-            loc = (loc[1], loc[0])
-        output, error = command("samtools faidx "+fasta+" "+chro+":"+str(loc[0])+"-"+str(loc[1]))
-        open('output/reffasta/'+date_time+'/'+name+".fasta", 'ab').write(output)
+    name, loc, type, chro, ex = item
+    if int(loc[0]) > int(loc[1]):
+        loc = (loc[1], loc[0])
+    output, error = command("samtools faidx "+fasta+" "+chro+":"+str(loc[0])+"-"+str(loc[1]))
+    open('output/reffasta/'+date_time+'/'+name+".fasta", 'ab').write(output)
 
 
 def extract_pos(gff, filter=None):
@@ -457,8 +451,12 @@ def run_normal(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
                     break
         else:
             genelist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}, chro=pos[3]))
-    cutVCF(genepos, vcf)
-    cutFasta(genepos, ref)
+    print("Slicing VCF/reference fasta..")
+    command('mkdir output/vcf/' + date_time)
+    command('mkdir output/reffasta/' + date_time)
+    for item in genepos:
+        cutVCF(item, vcf)
+        cutFasta(item, ref)
     nopedlist = vcf2ped(genepos, populationfile)
     command('mkdir output/sequences/' + date_time)
     print('generating HAP files and allele sequences..')
@@ -500,8 +498,12 @@ def run_rss(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
         else:
             rsslist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}))
     genelist = genelist + rsslist
-    cutVCF(genepos+rsspos, vcf)
-    cutFasta(genepos+rsspos, ref)
+    print("Slicing VCF/reference fasta..")
+    command('mkdir output/vcf/' + date_time)
+    command('mkdir output/reffasta/' + date_time)
+    for item in genepos+rsspos:
+        cutVCF(item, vcf)
+        cutFasta(item, ref)
     get_rss(genelist)
     nopedlist = vcf2ped(genepos+rsspos, populationfile)
     command('mkdir output/sequences/' + date_time)
