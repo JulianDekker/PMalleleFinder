@@ -31,13 +31,13 @@ $ python3 main_pipe.py --gff=gencode.v32.chr_patch_hapl_scaff.annotation.gff3 --
 * `--gff=gencodefile` **required**
 This option required a .gff or .gff3 input file to read gene locations from
 * `--vcf=vcffile.vcf` **required**
-This option requires a .vcf.gz and .vcf.tbi file to extract variation
+This option requires a .vcf.gz file. A .vcf.tbi file is also required to be present in the same location to extract variation
 * `--popfile=populationfile` **required**
 This option requires a tab seperated population file in the format of `Sample  pop Superpop`
 * `--ref=reference.fasta` **required**
-This option requires the reference genome fasta and an index for the fasta in the form of a .fai file. 
+This option requires the reference genome fasta. It is also required to have a index fasta file in the form of a .fai file present in the same folder. 
 * `--filter=filterfile`
-This option allows the specification of genes to filter on. Every new filter should be on a new line in this file. If not specified no filter will be used.
+This option allows the specification of genes to filter on. Every new filter should be on a new line in this file. If there is no filter specified the pipeline will assume *TCR* genes.
 * `--threshold=integer`
 this option allows the specification of the threshold used to discard sequences. If not specified the threshold is set to 4.
 * `--rss=TRUE|FALSE` 
