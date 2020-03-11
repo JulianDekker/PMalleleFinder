@@ -33,7 +33,7 @@ This option required a .gff or .gff3 input file to read gene locations from
 * `--vcf=vcffile.vcf` **required**
 This option requires a .vcf.gz file. A .vcf.tbi file is also required to be present in the same location to extract variation
 * `--popfile=populationfile` **required**
-This option requires a tab seperated population file in the format of `Sample  pop Superpop`
+This option requires a tab seperated population file in the format of `Sample  Pop Superpop`
 * `--ref=reference.fasta` **required**
 This option requires the reference genome fasta. It is also required to have a index fasta file in the form of a .fai file present in the same folder. 
 * `--filter=filterfile`
