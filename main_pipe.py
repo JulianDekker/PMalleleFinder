@@ -2,7 +2,7 @@ import Bio
 from Bio import SeqIO
 from Bio.Seq import Seq
 from BCBio import GFF
-import sys
+import sys, traceback
 import pprint
 import subprocess
 import pandas as pd
@@ -110,7 +110,6 @@ def hap_seq(gene):
         h = []
         for j in lines:
             h.append(j.split()[0].split(","))  # Split each line in into strings based on delimiters
-
         indices = [keys.index(i.split('.')[0]) for i in h[0]]
         h1 = []
         for y in range(1, len(h)):
@@ -128,7 +127,7 @@ def hap_seq(gene):
                                  str(Seq(str(h1[i])).reverse_complement() + "\n"))
                 else:
                     output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" + str(h1[i]) + "\n")
-    except:
+    except Exception as e:
         open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
         with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
             seq = ''

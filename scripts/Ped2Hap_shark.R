@@ -1,7 +1,11 @@
 args <- commandArgs(trailingOnly = TRUE)
+#setwd("/Users/julian/Documents/bafstu/sequences/G1K/_200311/fix")
 popfile<- args[1]
 name<- args[2]
 thresh = as.numeric(args[3])
+#name = "TRAJ20-exon1"
+#thresh = 4
+#popfile <- "pop-info.tsv"
 population=read.table(popfile, header=TRUE)
 data=read.table(paste0(name,".vcf.ped"), colClasses = "character")
 
@@ -62,18 +66,26 @@ op1=merge(freq.pop1,freq.suppop,by="row.names",all.x=TRUE)
 op2=merge(op1,freq.all, by.x="Row.names", by.y="Var1", all.x = TRUE)
 comb = combined[!duplicated(combined$dd),]
 op3=merge(op2,comb[,-c(1:3)],by.x="Row.names", by.y="dd",all.x=TRUE)
+#print(vapply(op3, function(x) length(unique(x)) > 1, logical(1L)))
+#aa=op3[vapply(op3, function(x) length(unique(x)) > 1, logical(1L))]
+op4 = op3[, -c(33:length(op3))]
+op5 = op3[, -c(1:32)]
+op6 <- cbind(op4, op5[vapply(op5, function(x) length(unique(x)) > 1, logical(1L))])
 
-aa=op3[vapply(op3, function(x) length(unique(x)) > 1, logical(1L))]
+#op4 <- op3[vapply(op3, function(x) length(unique(x)) > 1, logical(1L))]
+aa <- dplyr::distinct(op6, Row.names, .keep_all = TRUE)
 if (!is.null(aa)){
-  write.table(format(op3,digits=3),paste0(sapply(strsplit(name, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
+  print(aa)
+  write.table(format(op6,digits=3),paste0(sapply(strsplit(name, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
   #write.table(format(op3,digits=3),paste0(name,"-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
   tryCatch({
     aa=aa[order(aa$Freq, decreasing = TRUE), ]
+    #print(aa)
     write.table(format(aa,digits=3),paste0(sapply(strsplit(name, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
   },error = function(e) {})
   #write.table(format(aa,digits=3),paste0(name,"-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
 } else{
-  write.table(format(op3,digits=3),paste0(sapply(strsplit(name, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
+  write.table(format(op6,digits=3),paste0(sapply(strsplit(name, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
   #write.table(format(op3,digits=3),paste0(name,"-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
-i}
+}
 
