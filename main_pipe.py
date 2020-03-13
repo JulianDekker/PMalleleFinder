@@ -576,7 +576,7 @@ threshold is an integer defining the minimum support a allele must have to be sa
 rss is the option to enable generating rss sequences as well.
             """)
 
-    if gff == '' or vcf == '' or len(vcf.split(';')) != 2 or populationfile == '' or ref == '':
+    if gff == '' or vcf == '' or populationfile == '' or ref == '':
         print("Not enough arguments to run.\n\nPlease make sure to specify:\n\t--vcf=\"input1.vcf;input2.vcf\"\n\t--gff=input.gff\n\t--popfile=inputpopfile\n\t--ref=ref.fasta\nIn the command line options.")
     else:
         genepos = extract_pos(gff, filterfile)
