@@ -274,15 +274,18 @@ def cutVCF(item, vcf):
     :param vcf: vcf files for chr7 and 14 seperated by ;
     :return:
     """
-    vcf7, vcf14 = vcf.split(';')
     name, loc, type, chro, ex = item
     output, error = '', ''
-    if int(loc[0]) > int(loc[1]):
-        loc = (loc[1], loc[0])
-    if chro == 'chr7':
-        output, error = command("tabix -fh "+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
-    elif chro == 'chr14':
-        output, error = command("tabix -fh " + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
+    if len(vcf.split(';')) == 2:
+        vcf7, vcf14 = vcf.split(';')
+        if int(loc[0]) > int(loc[1]):
+            loc = (loc[1], loc[0])
+        if chro == 'chr7':
+            output, error = command("tabix -fh "+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
+        elif chro == 'chr14':
+            output, error = command("tabix -fh " + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
+    else:
+        output, error = command("tabix -fh " + vcf + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
     open('output/vcf/'+date_time+'/'+name+"-exon"+str(ex)+".vcf", 'wb').write(output)
 
 
