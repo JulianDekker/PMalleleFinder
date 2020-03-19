@@ -151,29 +151,6 @@ def ped2hap(gene, popfile, nopedlist, threshold):
         command('Rscript scripts/Hapmerge-exall.R '+popfile+' '+threshold+' '+' '.join(exons))
         command('Rscript scripts/CSV-Py-v2.R output/vcf/' + date_time + '/ ' + gene.get_name())
 
-    #nexon = len(exons)
-    # if nexon == 1:
-    #     command('Rscript scripts/Ped2Hap_shark.R '+popfile+' '+prefix+gene.get_name()+'-exon'+exons[0]+' ' +\
-    #                   threshold)
-    # elif nexon == 2:
-    #     ex1, ex2, = prefix+gene.get_name() + '-exon' + exons[0], prefix+gene.get_name()+'-exon'+exons[1]
-    #     command('Rscript scripts/Hapmerge.R '+popfile+' '+ex1+' '+ex2+' '+threshold)
-    # elif nexon == 3:
-    #     ex1, ex2, ex3 = prefix+gene.get_name() + '-exon' + exons[0], \
-    #                     prefix+gene.get_name() + '-exon' + exons[1], \
-    #                     prefix+gene.get_name() + '-exon' + exons[2]
-    #     command('Rscript scripts/Hapmerge-ex3.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+threshold)
-    # elif nexon == 4:
-    #     ex1, ex2, ex3, ex4 = prefix+gene.get_name() + '-exon' + exons[0], \
-    #                          prefix+gene.get_name() + '-exon' + exons[1], \
-    #                          prefix+gene.get_name() + '-exon' + exons[2], \
-    #                          prefix+gene.get_name() + '-exon' + exons[3]
-    #     command('Rscript scripts/Hapmerge-ex4.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+ex4+' '+threshold)
-    # elif nexon > 4:
-    #     print(len(exons), exons)
-    #     raise ValueError("Too many exons to process")
-
-
 
 def vcf2ped(genpos, popfile):
     """Creates PED files from VCF files
