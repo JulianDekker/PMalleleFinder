@@ -145,30 +145,34 @@ def ped2hap(gene, popfile, nopedlist, threshold):
     :return:
     """
     prefix = 'output/vcf/'+date_time+'/'
-    exons = sorted(gene.get_exons().keys())
-    exons = [exon for exon in exons if gene.get_name()+'-exon'+str(exon) not in nopedlist]
-    nexon = len(exons)
-    if nexon == 1:
-        command('Rscript scripts/Ped2Hap_shark.R '+popfile+' '+prefix+gene.get_name()+'-exon'+exons[0]+' ' +\
-                      threshold)
-    elif nexon == 2:
-        ex1, ex2, = prefix+gene.get_name() + '-exon' + exons[0], prefix+gene.get_name()+'-exon'+exons[1]
-        command('Rscript scripts/Hapmerge.R '+popfile+' '+ex1+' '+ex2+' '+threshold)
-    elif nexon == 3:
-        ex1, ex2, ex3 = prefix+gene.get_name() + '-exon' + exons[0], \
-                        prefix+gene.get_name() + '-exon' + exons[1], \
-                        prefix+gene.get_name() + '-exon' + exons[2]
-        command('Rscript scripts/Hapmerge-ex3.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+threshold)
-    elif nexon == 4:
-        ex1, ex2, ex3, ex4 = prefix+gene.get_name() + '-exon' + exons[0], \
-                             prefix+gene.get_name() + '-exon' + exons[1], \
-                             prefix+gene.get_name() + '-exon' + exons[2], \
-                             prefix+gene.get_name() + '-exon' + exons[3]
-        command('Rscript scripts/Hapmerge-ex4.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+ex4+' '+threshold)
-    elif nexon > 4:
-        print(len(exons), exons)
-        raise ValueError("Too many exons to process")
-    command('Rscript scripts/CSV-Py-v2.R output/vcf/'+date_time+'/ '+ gene.get_name())
+    exons = sorted([int(k) for k in gene.get_exons().keys()])
+    exons = [prefix+gene.get_name()+'-exon'+str(exon) for exon in exons if gene.get_name()+'-exon'+str(exon) not in nopedlist]
+    if len(exons) >= 1:
+        command('Rscript scripts/Hapmerge-exall.R '+popfile+' '+threshold+' '+' '.join(exons))
+        command('Rscript scripts/CSV-Py-v2.R output/vcf/' + date_time + '/ ' + gene.get_name())
+
+    #nexon = len(exons)
+    # if nexon == 1:
+    #     command('Rscript scripts/Ped2Hap_shark.R '+popfile+' '+prefix+gene.get_name()+'-exon'+exons[0]+' ' +\
+    #                   threshold)
+    # elif nexon == 2:
+    #     ex1, ex2, = prefix+gene.get_name() + '-exon' + exons[0], prefix+gene.get_name()+'-exon'+exons[1]
+    #     command('Rscript scripts/Hapmerge.R '+popfile+' '+ex1+' '+ex2+' '+threshold)
+    # elif nexon == 3:
+    #     ex1, ex2, ex3 = prefix+gene.get_name() + '-exon' + exons[0], \
+    #                     prefix+gene.get_name() + '-exon' + exons[1], \
+    #                     prefix+gene.get_name() + '-exon' + exons[2]
+    #     command('Rscript scripts/Hapmerge-ex3.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+threshold)
+    # elif nexon == 4:
+    #     ex1, ex2, ex3, ex4 = prefix+gene.get_name() + '-exon' + exons[0], \
+    #                          prefix+gene.get_name() + '-exon' + exons[1], \
+    #                          prefix+gene.get_name() + '-exon' + exons[2], \
+    #                          prefix+gene.get_name() + '-exon' + exons[3]
+    #     command('Rscript scripts/Hapmerge-ex4.R '+popfile+' '+ex1+' '+ex2+' '+ex3+' '+ex4+' '+threshold)
+    # elif nexon > 4:
+    #     print(len(exons), exons)
+    #     raise ValueError("Too many exons to process")
+
 
 
 def vcf2ped(genpos, popfile):
@@ -276,17 +280,22 @@ def cutVCF(item, vcf):
     """
     name, loc, type, chro, ex = item
     output, error = '', ''
+    if 'chr' in chro:
+        chrom = chro[3:]
+    else:
+        chrom = chro
     if len(vcf.split(';')) == 2:
         vcf7, vcf14 = vcf.split(';')
         if int(loc[0]) > int(loc[1]):
             loc = (loc[1], loc[0])
         if chro == 'chr7':
-            output, error = command("tabix -fh "+vcf7+" "+chro[3:]+":"+str(loc[0])+"-"+str(loc[1]))
+            output, error = command("tabix -fh "+vcf7+" "+chrom+":"+str(loc[0])+"-"+str(loc[1]))
         elif chro == 'chr14':
-            output, error = command("tabix -fh " + vcf14 + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
+            output, error = command("tabix -fh " + vcf14 + " " + chrom + ":" + str(loc[0]) + "-" + str(loc[1]))
     else:
-        output, error = command("tabix -fh " + vcf + " " + chro[3:] + ":" + str(loc[0]) + "-" + str(loc[1]))
-    open('output/vcf/'+date_time+'/'+name+"-exon"+str(ex)+".vcf", 'wb').write(output)
+        output, error = command("tabix -fh " + vcf + " " + chrom + ":" + str(loc[0]) + "-" + str(loc[1]))
+    if output is not '':
+        open('output/vcf/'+date_time+'/'+name+"-exon"+str(ex)+".vcf", 'wb').write(output)
 
 
 def cutFasta(item, fasta):
@@ -311,20 +320,23 @@ def extract_pos(gff, filter=None):
     :return:
     """
     print("Processing gencode annotation..")
-    if filter:
-        print('Filtering on: ', filter)
     in_handle = open(gff)
     limit_info = dict(
-        gff_id=["chr7", "chr14"],
         gff_type=['exon', 'CDS']
     )
+    if filter:
+        print('Filtering on: ', filter)
+        if filter[0].startswith('#'):
+            chrfilter = filter[0].split('#CHR')[1].strip().split(',')
+            limit_info['gff_id'] = ['chr'+(str(x)) for x in chrfilter]
+            filter = filter[1::]
     genlist = set()
     for rec in GFF.parse(in_handle, limit_info=limit_info):
         for feature in rec.features:
             if feature.type == 'inferred_parent':
                 for f in feature.sub_features:
                     if containsTR(f.qualifiers['gene_name'][0], filter):
-                        if f.type == 'CDS':
+                        if f.type == 'CDS' and 'chr' in rec.id:
                             if containCDSGENE(genlist, f.qualifiers['gene_name'][0], 'gene'):
                                 genlist = discarditem(genlist, f.qualifiers['gene_name'][0])
                             genlist.add((f.qualifiers['gene_name'][0], (f.location.start+1, f.location.end,
@@ -334,7 +346,7 @@ def extract_pos(gff, filter=None):
                             for entry in entries:
                                 if entry[2] == 'exon':
                                     genlist.remove(entry)
-                        elif f.type == 'exon':
+                        elif f.type == 'exon' and 'chr' in rec.id:
                             if not containCDSGENE(genlist, f.qualifiers['gene_name'][0], 'CDS'):
                                 genlist.add((f.qualifiers['gene_name'][0], (f.location.start+1, f.location.end,
                                                                             f.location.strand), f.type, rec.id,
@@ -345,7 +357,7 @@ def extract_pos(gff, filter=None):
                         ex_number = feature.qualifiers['exon_number'][0]
                     except:
                         ex_number = 1
-                    if feature.type == 'CDS':
+                    if feature.type == 'CDS' and 'chr' in rec.id:
                         if containCDSGENE(genlist, feature.qualifiers['gene_name'][0], 'gene'):
                             genlist = discarditem(genlist, feature.qualifiers['gene_name'][0])
                         genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start+1, feature.location.end,
@@ -355,12 +367,15 @@ def extract_pos(gff, filter=None):
                         for entry in entries:
                             if entry[2] == 'exon':
                                 genlist.remove(entry)
-                    elif feature.type == 'exon':
+                    elif feature.type == 'exon' and 'chr' in rec.id:
                         if not containCDSGENE(genlist, feature.qualifiers['gene_name'][0], 'CDS'):
                             genlist.add((feature.qualifiers['gene_name'][0], (feature.location.start+1,
                                                                               feature.location.end,
                                                                               feature.location.strand), feature.type,
                                          rec.id, ex_number))
+        #for item in genlist:
+        #    if "chr" not in item[3]:
+        #        genlist.remove(item)
     return sorted(genlist)
 
 
@@ -372,7 +387,7 @@ def containsTR(str, list=None):
     """
     if not list:
         list = ['TRAV', 'TRAC', 'TRAJ',
-                'TRBV', 'TRBC', 'TRBJ', 'TRBC', 'TRBD',
+                'TRBV', 'TRBC', 'TRBJ', 'TRBD',
                 'TRGV', 'TRGC', 'TRGJ',
                 'TRDV', 'TRDC', 'TRDJ', 'TRDD']
     for item in list:

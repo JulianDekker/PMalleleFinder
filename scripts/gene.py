@@ -32,3 +32,11 @@ class Gene:
         else:
             endpos = self.exons[endexon][0]
         return (startpos, endpos)
+
+    def __str__(self):
+        return 'Gene object. ' + self.get_name() + '. Exons: ' + str(len(self.get_exons().keys())) + '; ' + ';'.join(
+            self.get_exons().keys())
+
+    def __repr__(self):
+        return 'Gene object. ' + self.get_name() + '. Exons: ' + str(len(self.get_exons().keys())) + '; ' + ';'.join(
+            self.get_exons().keys())

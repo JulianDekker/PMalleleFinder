@@ -1,25 +1,21 @@
 args <- commandArgs(trailingOnly = TRUE)
 popfile = args[1]
-ped1 = args[2]
-ped2 = args[3]
-ped3 = args[4]
-ped4 = args[5]
-thresh = as.numeric(args[6])
+thresh= as.numeric(args[2])
+ped1 = args[3]
+pedfiles = args[4:length(args)]
 population=read.table(popfile, header=TRUE)
 
 d1=read.table(paste0(ped1 ,".vcf.ped"), colClasses = "character")
-d2=read.table(paste0(ped2, ".vcf.ped"), colClasses = "character")
-d3=read.table(paste0(ped3, ".vcf.ped"), colClasses = "character")
-d4=read.table(paste0(ped4, ".vcf.ped"), colclasses = "character")
-data=cbind(d1,d2[,-c(1:2)])
-data=cbind(data, d3[,-c(1:2)])
-data=cbind(data, d4[,-c(1:2)])
-
+if (!is.na(pedfiles[1])) {
+  for (ped in pedfiles) {
+  d=read.table(paste0(ped ,".vcf.ped"), colClasses = "character")
+  d1 = cbind(d1,d[,-c(1:2)])
+  }
+}
+data = d1
 Maternal=data[ , !c(TRUE,FALSE) ]
 Paternal=data[ , !c(FALSE,TRUE) ]
 
-#Maternalp=cbind(population,Maternal)
-#Paternalp=cbind(population,Paternal)
 colnames(Maternal)[1] <- "sample"
 Maternalp=cbind(population,Maternal)		
 colnames(Paternal)[1] <- "sample"
@@ -28,13 +24,15 @@ Maternalp=merge(population[, c(1:3)],Maternal)
 Paternalp=merge(population[, c(1:3)],Paternal)
 
 vcf1=read.table(paste0(ped1, ".vcf"))
-vcf2=read.table(paste0(ped2, ".vcf"))
-vcf3=read.table(paste0(ped3, ".vcf"))
-vcf4=read.table(paste0(ped4, ".vcf"))
-vcf=rbind(vcf1,vcf2)
-vcf=rbind(vcf, vcf3)
-vcf=rbind(vcf, vcf4)
 
+if (!is.na(pedfiles[1])) {
+  for (ped in pedfiles) {
+    vcf2=read.table(paste0(ped, ".vcf"))
+    vcf1=rbind(vcf1,vcf2)
+  }
+}
+
+vcf = vcf1
 vcf.ref=t(vcf[,2:4])
 vcf.ref=apply(format(vcf.ref), 2, paste, collapse="_")
 colnames(Maternalp) <- c("pop", "superpop","sample",vcf.ref)
@@ -85,6 +83,7 @@ op1=merge(freq.pop1,freq.suppop,by="row.names",all.x=TRUE)
 op2=merge(op1,freq.all, by.x="Row.names", by.y="Var1", all.x = TRUE)
 comb = combined[!duplicated(combined$dd),]
 op3=merge(op2,comb[,-c(1:3)],by.x="Row.names", by.y="dd",all.x=TRUE)
+
 op4 = op3[, -c(33:length(op3))]
 op5 = op3[, -c(1:32)]
 op6 <- cbind(op4, op5[vapply(op5, function(x) length(unique(x)) > 1, logical(1L))])
@@ -98,7 +97,7 @@ if (!is.null(aa)){
     aa=aa[order(aa$Freq, decreasing = TRUE), ]
     write.table(format(aa,digits=3),paste0(sapply(strsplit(ped1, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
   },error = function(e) {})
-#write.table(format(aa,digits=3),paste0(gsub("-exon1-", "", ped1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
+  #write.table(format(aa,digits=3),paste0(gsub("-exon1-", "", ped1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
 } else{
   write.table(format(op6,digits=3),paste0(sapply(strsplit(ped1, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
   #write.table(format(op3,digits=3),paste0(gsub("-exon1-", "", ped1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
