@@ -44,4 +44,4 @@ This option allows the specification of the threshold used to discard sequences.
 * `--rss=TRUE|FALSE` 
 This option if set to TRUE will also generate sequences containing the RSS for *V,D,J* genes. 60bp sequence will be cut.
 * `--outdir=dir` 
-This option will change the output directory to a desired string. ex: output/test.
+This option will change the output directory to a desired string. ex: output/test. When no output directory is specified the time of task start will be used as directory.
