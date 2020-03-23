@@ -18,6 +18,7 @@ This pipeline will allow you to extract allele sequences and population informat
 * R=3.6.1
 * samtools=1.6
 * tabix=1.6
+* dplyr=0.8.5
 	
 ## Setup
 Clone the project structure and run `main_pipe.py`
@@ -31,13 +32,13 @@ $ python3 main_pipe.py --gff=gencode.v32.chr_patch_hapl_scaff.annotation.gff3 --
 * `--gff=gencodefile` **required**
 This option required a .gff or .gff3 input file to read gene locations from
 * `--vcf=vcffile.vcf` **required**
-This option requires a .vcf.gz file. A .vcf.tbi file is also required to be present in the same location to extract variation
+This option requires a .vcf.gz file. A .vcf.tbi file is also required to be present in the same location to extract variation.
 * `--popfile=populationfile` **required**
-This option requires a tab seperated population file in the format of `Sample  Pop Superpop`
+This option requires a tab seperated population file in the format of `sample  pop super_pop`
 * `--ref=reference.fasta` **required**
 This option requires the reference genome fasta. It is also required to have a index fasta file in the form of a .fai file present in the same folder. 
 * `--filter=filterfile`
-This option allows the specification of genes to filter on. Every new filter should be on a new line in this file. If there is no filter specified the pipeline will assume *TCR* genes.
+This option allows the specification of genes to filter on. Every new filter should be on a new line in this file. If there is no filter specified the pipeline will assume *TCR* genes. Chromosones can be filtered by adding `#CHR int,int` on the first line of the filter file.
 * `--threshold=integer`
 this option allows the specification of the threshold used to discard sequences. If not specified the threshold is set to 4.
 * `--rss=TRUE|FALSE` 
