@@ -10,7 +10,7 @@ import scripts.gene as gene
 from datetime import datetime
 
 now = datetime.now()
-date_time = now.strftime("%Y%m%d%H%M%S")
+outdir = 'output/'+now.strftime("%Y%m%d%H%M%S")
 
 
 def get_rss(genelist):
@@ -46,8 +46,8 @@ def make_all_fasta():
     :return:
     """
     import glob
-    read_files = glob.glob('output/sequences/' + date_time + '/*.fasta')
-    with open('output/sequences/' + date_time + '/'+ date_time + '_all.fasta', "wb") as outfile:
+    read_files = glob.glob(outdir + '/sequences/*.fasta')
+    with open(outdir + '/sequences/'+ outdir.split('/')[len(outdir.split('/'))-1] + '_all.fasta', "wb") as outfile:
         for f in read_files:
             with open(f, "rb") as infile:
                 outfile.write(infile.read())
@@ -59,30 +59,30 @@ def report(gff, vcf, ref, populationfile, genelist, nopedlist, filter, threshold
     :return:
     """
     print("Reporting results..")
-    with open('output/report_'+date_time+'.txt', 'a') as report:
+    with open(outdir + '/report_' + outdir.split('/')[len(outdir.split('/'))-1] + '.txt', 'a') as report:
         sequences_total = 0
         reportlist = []
         for gene in genelist:
-            seqs = [seq for seq in SeqIO.parse(open('output/sequences/'+date_time+'/'+gene.get_name()+'.fasta'),
+            seqs = [seq for seq in SeqIO.parse(open(outdir + '/sequences/' + gene.get_name() + '.fasta'),
                                                'fasta') if 'rss' not in gene.get_name()]
             sequences_total += len(seqs)
             try:
-                with open('output/vcf/' + date_time + '/' + gene.get_name() + '-py.csv', 'r') as pos:
+                with open(outdir + '/vcf/' + gene.get_name() + '-py.csv', 'r') as pos:
                     line = pos.readline().strip()
                     mutated_pos = len(line.split(','))
             except:
                 mutated_pos = 0
             if 'rss' in gene.get_name():
                 seqs = [seq for seq in
-                        SeqIO.parse(open('output/sequences/' + date_time + '/' + gene.get_name() + '.fasta'), 'fasta')]
+                        SeqIO.parse(open(outdir + '/sequences/' + gene.get_name() + '.fasta'), 'fasta')]
                 reportlist.append([gene.get_name(), len(seqs), mutated_pos])
             else:
                 reportlist.append([gene.get_name(), len(seqs), mutated_pos])
         genecount = len([i for i in genelist if 'rss' not in i.get_name()])
-        report.write("--Report job: "+date_time+"---\n\nGff file: "+gff+"\nVcf files: "+vcf+"\nReference fasta: "+ref +
-                     "\nPopulation file: "+populationfile+"\n\nTotal gene count: "+str(genecount)+
-                     "\nTotal allele count: "+ str(sequences_total)
-                     + "\nSkipped exons (no variation): "+str(len(nopedlist))+"\nThreshold: "+str(threshold)+"\n")
+        report.write("--Report save location: " + outdir + "---\n\nGff file: " + gff + "\nVcf files: " + vcf + "\nReference fasta: " + ref +
+                     "\nPopulation file: " + populationfile +"\n\nTotal gene count: " + str(genecount) +
+                     "\nTotal allele count: " + str(sequences_total)
+                     + "\nSkipped exons (no variation): " + str(len(nopedlist)) +"\nThreshold: " + str(threshold) +"\n")
         if filter:
             report.write("Applied filters: ["+",".join(filter)+"]\n")
         report.write('\nGene\talleles\tmutated_positions\n')
@@ -97,7 +97,7 @@ def hap_seq(gene):
     """
     keys = []
     values = []
-    ref = SeqIO.parse(open('output/reffasta/'+date_time+'/'+gene.get_name()+'.fasta'), 'fasta')
+    ref = SeqIO.parse(open(outdir + '/reffasta/' + gene.get_name() + '.fasta'), 'fasta')
     ref = [seq for seq in ref]
     for seq in ref:
         start, stop = seq.id.split(':')[1].split('-')
@@ -105,7 +105,7 @@ def hap_seq(gene):
         for i in range(int(start), int(stop) + 1):
             keys.append(str(i))
     try:
-        with open('output/vcf/'+ date_time + '/' + gene.get_name() + '-py.csv', 'r') as n:  # Open the file
+        with open(outdir + '/vcf/' + gene.get_name() + '-py.csv', 'r') as n:  # Open the file
             lines = n.readlines()   # Read all the lines in the CSV file, with each line as a
         h = []
         for j in lines:
@@ -119,8 +119,8 @@ def hap_seq(gene):
             h1.append(''.join(l1new))
         h1.append(''.join(values))
         h1 = list(sorted(set(h1), key=h1.index))
-        open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
-        with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
+        open(outdir + '/sequences/' + gene.get_name() + '.fasta', "w").write('')
+        with open(outdir + '/sequences/' + gene.get_name() + '.fasta', "w") as output:
             for i in range(len(h1)): #
                 if gene.get_exons()[list(gene.get_exons().keys())[0]][2] == -1:
                     output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" +
@@ -128,8 +128,8 @@ def hap_seq(gene):
                 else:
                     output.write(">" + gene.get_name() + "_" + str(i + 1) + "\n" + str(h1[i]) + "\n")
     except Exception as e:
-        open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w").write('')
-        with open('output/sequences/'+date_time+'/' + gene.get_name() + '.fasta', "w") as output:
+        open(outdir + '/sequences/' + gene.get_name() + '.fasta', "w").write('')
+        with open(outdir + '/sequences/' + gene.get_name() + '.fasta', "w") as output:
             seq = ''
             for sequence in ref:
                 seq += str(sequence.seq)
@@ -144,12 +144,12 @@ def ped2hap(gene, popfile, nopedlist, threshold):
     :param genelist:
     :return:
     """
-    prefix = 'output/vcf/'+date_time+'/'
+    prefix = outdir + '/vcf/'
     exons = sorted([int(k) for k in gene.get_exons().keys()])
     exons = [prefix+gene.get_name()+'-exon'+str(exon) for exon in exons if gene.get_name()+'-exon'+str(exon) not in nopedlist]
     if len(exons) >= 1:
         command('Rscript scripts/Hapmerge-exall.R '+popfile+' '+threshold+' '+' '.join(exons))
-        command('Rscript scripts/CSV-Py-v2.R output/vcf/' + date_time + '/ ' + gene.get_name())
+        command('Rscript scripts/CSV-Py-v2.R ' + outdir + '/vcf/ ' + gene.get_name())
 
 
 def vcf2ped(genpos, popfile):
@@ -160,7 +160,7 @@ def vcf2ped(genpos, popfile):
     popfile = pd.read_csv(popfile, sep='\t', header=0)
     nopedlist=[]
     for file in genpos:
-        filename = 'output/vcf/'+ date_time + '/' + file[0] + "-exon" + str(file[4]) + '.vcf'
+        filename = outdir + '/vcf/' + file[0] + "-exon" + str(file[4]) + '.vcf'
         try:
             df1 = pd.read_table(filename, comment='#', header=None)
             df = df1.drop(columns=[0, 1, 2, 5, 6, 7, 8])
@@ -272,7 +272,7 @@ def cutVCF(item, vcf):
     else:
         output, error = command("tabix -fh " + vcf + " " + chrom + ":" + str(loc[0]) + "-" + str(loc[1]))
     if output is not '':
-        open('output/vcf/'+date_time+'/'+name+"-exon"+str(ex)+".vcf", 'wb').write(output)
+        open(outdir + '/vcf/' + name + "-exon" + str(ex) + ".vcf", 'wb').write(output)
 
 
 def cutFasta(item, fasta):
@@ -286,7 +286,7 @@ def cutFasta(item, fasta):
     if int(loc[0]) > int(loc[1]):
         loc = (loc[1], loc[0])
     output, error = command("samtools faidx "+fasta+" "+chro+":"+str(loc[0])+"-"+str(loc[1]))
-    open('output/reffasta/'+date_time+'/'+name+".fasta", 'ab').write(output)
+    open(outdir + '/reffasta/' + name + ".fasta", 'ab').write(output)
 
 
 def extract_pos(gff, filter=None):
@@ -304,7 +304,7 @@ def extract_pos(gff, filter=None):
     if filter:
         print('Filtering on: ', filter)
         if filter[0].startswith('#'):
-            chrfilter = filter[0].split('#CHR')[1].strip().split(',')
+            chrfilter = filter[0].split()[1].strip().split(',')
             limit_info['gff_id'] = ['chr'+(str(x)) for x in chrfilter]
             filter = filter[1::]
     genlist = set()
@@ -424,6 +424,29 @@ def in_genelist(genelist, name):
             return True
     return False
 
+def printhelp():
+    print("""
+    TR allele pipeline:
+
+    --gff=input gff <file paths>
+    --vcf="inputvcf1;inputvcf2" <file paths>
+    --popfile=inputpopfile <file path>
+    --ref=ref.fasta <file path>
+    --filter=filterlist <file path>
+    --threshold=value <integer>
+    --rss=TRUE|FALSE <boolean>
+    --outdir=directory <string>
+
+    gff is a valid annotation file in gencode format
+    vcf requires a vcf.gz and requires a vcf.tbi to be present. needs to be two filenames in quotes.
+    popfile is a tab seperated file containing sample and populaltion information: SampleID Pop Superpop
+    ref is the reference genome in fasta format.
+    filter is an optional argument to filter on a set of genes.
+    threshold is an integer defining the minimum support a allele must have to be saved in the HAP file.
+    rss is the option to enable generating rss sequences as well.
+    outdir is the desired output directory name.
+                """)
+
 
 def run_normal(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
     """
@@ -446,13 +469,14 @@ def run_normal(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
         else:
             genelist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}, chro=pos[3]))
     print("Slicing VCF/reference fasta..")
-    command('mkdir output/vcf/' + date_time)
-    command('mkdir output/reffasta/' + date_time)
+    command('mkdir ' + outdir + '/')
+    command('mkdir ' + outdir + '/vcf/')
+    command('mkdir ' + outdir + '/reffasta/')
+    command('mkdir ' + outdir + '/sequences/')
     for item in genepos:
         cutVCF(item, vcf)
         cutFasta(item, ref)
     nopedlist = vcf2ped(genepos, populationfile)
-    command('mkdir output/sequences/' + date_time)
     print('generating HAP files and allele sequences..')
     for genes in genelist:
         ped2hap(genes, populationfile, nopedlist, threshold)
@@ -493,14 +517,18 @@ def run_rss(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
             rsslist.append(gene.Gene(pos[0], {str(pos[4]): pos[1]}))
     genelist = genelist + rsslist
     print("Slicing VCF/reference fasta..")
-    command('mkdir output/vcf/' + date_time)
-    command('mkdir output/reffasta/' + date_time)
+    command('mkdir ' + outdir + '/')
+    command('mkdir ' + outdir + '/vcf/')
+    command('mkdir ' + outdir + '/reffasta/')
+    command('mkdir ' + outdir + '/sequences/')
+    #command('mkdir output/vcf/' + date_time)
+    #command('mkdir output/reffasta/' + date_time)
     for item in genepos+rsspos:
         cutVCF(item, vcf)
         cutFasta(item, ref)
     get_rss(genelist)
     nopedlist = vcf2ped(genepos+rsspos, populationfile)
-    command('mkdir output/sequences/' + date_time)
+    #command('mkdir output/sequences/' + date_time)
     print('generating HAP files and allele sequences..')
     for genes in genelist:
         ped2hap(genes, populationfile, nopedlist, threshold)
@@ -511,13 +539,14 @@ def run_rss(gff, genepos, vcf, ref, populationfile, filterfile, threshold):
 
 def main():
     """
-    --gff=input gff
-    --vcf="inputvcf1;inputvcf2"
-    --popfile=inputpopfile
-    --ref=ref.fasta
-    --filter=filterlist
-    --threshold=integer
-    --rss=TRUE|FALSE
+    --gff=input gff <file paths>
+    --vcf="inputvcf1;inputvcf2" <file paths>
+    --popfile=inputpopfile <file path>
+    --ref=ref.fasta <file path>
+    --filter=filterlist <file path>
+    --threshold=value <integer>
+    --rss=TRUE|FALSE <boolean>
+    --outdir=directory <string>
     gff is a valid annotation file in gencode format
     vcf requires a vcf.gz and requires a vcf.tbi to be present. needs to be two filenames in quotes.
     popfile is a tab seperated file containing sample and populaltion information: SampleID Pop Superpop
@@ -526,47 +555,41 @@ def main():
     threshold is an integer defining the minimum support a allele must have to be saved in the HAP file.
     :return:
     """
+    global outdir
     gff, vcf, populationfile, ref = '', '', '', ''
     filterfile = None
     rss = False
     threshold = '4'
-    for arguments in sys.argv:
+    for arguments in sys.argv[1::]:
         if arguments.startswith('--gff'):
             gff = arguments.split('=')[1]
-        if arguments.startswith('--vcf'):
+        elif arguments.startswith('--vcf'):
             vcf = arguments.split('=')[1]
-        if arguments.startswith('--popfile'):
+        elif arguments.startswith('--popfile'):
             populationfile = arguments.split('=')[1]
-        if arguments.startswith('--ref'):
+        elif arguments.startswith('--ref'):
             ref = arguments.split('=')[1]
-        if arguments.startswith('--filter'):
+        elif arguments.startswith('--filter'):
             filterfile = [x.strip() for x in open(arguments.split('=')[1], 'r').readlines()]
-        if arguments.startswith('--threshold'):
+        elif arguments.startswith('--threshold'):
             threshold = str(arguments.split('=')[1])
-        if arguments.startswith('--rss'):
+        elif arguments.startswith('--rss'):
             rss = arguments.split('=')[1]
             if rss.upper() == "TRUE":
                 rss = True
-        if arguments.startswith('--help'):
-            print("""
-TR allele pipeline:
-
---gff=input gff
---vcf="inputvcf1;inputvcf2"
---popfile=inputpopfile
---ref=ref.fasta
---filter=filterlist
---threshold=integer
---rss=TRUE|FALSE
-
-gff is a valid annotation file in gencode format
-vcf requires a vcf.gz and requires a vcf.tbi to be present. needs to be two filenames in quotes.
-popfile is a tab seperated file containing sample and populaltion information: SampleID Pop Superpop
-ref is the reference genome in fasta format.
-filter is an optional argument to filter on a set of genes.
-threshold is an integer defining the minimum support a allele must have to be saved in the HAP file.
-rss is the option to enable generating rss sequences as well.
-            """)
+        elif arguments.startswith('--outdir'):
+            outdir = str(arguments.split('=')[1])
+        elif arguments.startswith('--help'):
+            printhelp()
+        elif '=' not in arguments:
+            printhelp()
+            raise ValueError(
+                'Argument "' + arguments + '" recognised.. Please use --help to list the arguments available.\n')
+        elif arguments.split('=')[0] not in ['--filter', '--vcf', '--popfile', '--ref', '--gff', '--threshold', '--rss',
+                                             '--outdir', '--help']:
+            printhelp()
+            raise ValueError(
+                '\nArgument "'+arguments+'" recognised.. Please use --help to list the arguments available.\n')
 
     if gff == '' or vcf == '' or populationfile == '' or ref == '':
         print("Not enough arguments to run.\n\nPlease make sure to specify:\n\t--vcf=\"input1.vcf;input2.vcf\"\n\t--gff=input.gff\n\t--popfile=inputpopfile\n\t--ref=ref.fasta\nIn the command line options.")
@@ -586,7 +609,7 @@ rss is the option to enable generating rss sequences as well.
  |_|    |_|_| |_|_|___/_| |_|\___|\__,_|
  =======================================                               
         """)
-        print("Output ID: "+ date_time)
+        print("Output ID: " + outdir)
 
 
 main()
