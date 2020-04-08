@@ -40,6 +40,8 @@ This option requires the reference genome fasta. It is also required to have a i
 * `--filter=filterfile`
 This option allows the specification of genes to filter on. Every new filter should be on a new line in this file. If there is no filter specified the pipeline will assume *TCR* genes. Chromosones can be filtered by adding `#CHR int,int` on the first line of the filter file.
 * `--threshold=integer`
-this option allows the specification of the threshold used to discard sequences. If not specified the threshold is set to 4.
+This option allows the specification of the threshold used to discard sequences. If not specified the threshold is set to 4.
 * `--rss=TRUE|FALSE` 
 This option if set to TRUE will also generate sequences containing the RSS for *V,D,J* genes. 60bp sequence will be cut.
+* `--outdir=dir` 
+This option will change the output directory to a desired string. ex: output/test. When no output directory is specified the time of task start will be used as directory.
