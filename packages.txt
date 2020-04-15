@@ -7,3 +7,4 @@ R=3.6.1
 samtools=1.6
 tabix=1.6
 dplyr=0.8.5
+tidyr

@@ -149,7 +149,7 @@ def ped2hap(gene, popfile, nopedlist, threshold):
     exons = [prefix+gene.get_name()+'-exon'+str(exon) for exon in exons if gene.get_name()+'-exon'+str(exon) not in nopedlist]
     if len(exons) >= 1:
         command('Rscript scripts/Hapmerge-exall.R '+popfile+' '+threshold+' '+' '.join(exons))
-        command('Rscript scripts/CSV-Py-v2.R ' + outdir + '/vcf/ ' + gene.get_name())
+        command('Rscript scripts/CSV-Py-v3.R ' + outdir + '/vcf/ ' + gene.get_name())
 
 
 def vcf2ped(genpos, popfile):

@@ -1,3 +1,5 @@
+library(dplyr, warn.conflicts = FALSE)
+
 args <- commandArgs(trailingOnly = TRUE)
 popfile = args[1]
 thresh= as.numeric(args[2])
@@ -22,7 +24,8 @@ colnames(Paternal)[1] <- "sample"
 Paternalp=cbind(population,Paternal)		
 Maternalp=merge(population[, c(1:3)],Maternal)
 Paternalp=merge(population[, c(1:3)],Paternal)
-
+Maternalp$mat <- c("_M")
+Paternalp$pat <- c("_P")
 vcf1=read.table(paste0(ped1, ".vcf"))
 
 if (!is.na(pedfiles[1])) {
@@ -64,37 +67,68 @@ if (!is.null(dim(vcf.ref))){
 } else{
   vcf.ref=paste(as.array(format(vcf.ref)), collapse='_')
 }
-#colnames(matern) <- c("pop", "superpop","sampleId",vcf.ref,"dd")
-#colnames(patern) <- c("pop", "superpop","sampleId",vcf.ref,"dd")
-colnames(matern) <- c("sample", "superpop","pop",vcf.ref,"dd")
-colnames(patern) <- c("sample", "superpop","pop",vcf.ref,"dd")
+
+colnames(matern) <- c("sample", "superpop","pop",vcf.ref,"phase","dd")
+colnames(patern) <- c("sample", "superpop","pop",vcf.ref,"phase","dd")
 
 
 combined=rbind(matern,patern)
-#print(combined)
+combined <- combined[, !duplicated(colnames(combined), fromLast = TRUE)] 
+combined1 <- combined %>%
+  dplyr::group_by(dd) %>%
+  dplyr::summarise(test = toString(sample)) %>%
+  dplyr::ungroup()
+
+colnames(combined1) <- c ("dd","sample")
+
 freq.all <- data.frame(table(combined$dd)) ##Retreive haplotype numbers for 2504 individuals all together
 freq.pop <- as.data.frame.matrix(table(combined$dd,combined$pop)) ##Retreive haplotype numbers for populations
 freq.suppop <- as.data.frame.matrix(table(combined$dd,combined$superpop)) ##Retreive haplotype numbers for superpopulations
 
 ######Representing the data
-freq.pop1=freq.pop[apply(freq.pop,1,function(x) !all(x<thresh)),] ###removing rows with all populations <0.005 AF
+mergehapfreq <- function (x){
+  dd <- rownames(x)
+  rownames(x) <- NULL
+  x1 <- cbind(dd, x)
+  x1$dd <- gsub("_.", "", x1$dd)
+  x1_1 <- dplyr::group_by(x1, dd) %>% dplyr::summarise_all(sum)
+  df<-data.frame(x1_1)
+  rownames(df) <- df[,1]
+  df[,1] <- NULL
+  freq.pop1=df[apply(df,1,function(x) !all(x<thresh)),] ###removing rows with all populations <0.005 AF
+  dd <- rownames(freq.pop1)
+  rownames(freq.pop1) <- NULL
+  x2 <- cbind(dd, freq.pop1)
+  return (x2)
+}
+uniqfreq <- mergehapfreq(freq.pop)
+dd <- as.data.frame(rownames(freq.pop))
+colnames(dd) <- c("dd")
+dd1 <- dd %>% 
+  tidyr::separate(dd, c("dd", "a"), extra='drop')
+freq.pop <- cbind(dd1, freq.pop)
+rownames(freq.pop) <- NULL
+
+freq.pop1 <- subset(freq.pop, dd %in% uniqfreq$dd)
+mp_col <- paste(freq.pop1$dd, freq.pop1$a, sep='_')
+rownames(freq.pop1) <- mp_col
+freq.pop1[, c(1:2)] <- NULL
 
 op1=merge(freq.pop1,freq.suppop,by="row.names",all.x=TRUE)
-op2=merge(op1,freq.all, by.x="Row.names", by.y="Var1", all.x = TRUE)
+op1_1=merge(op1,combined1,by.x="Row.names", by.y="dd",all.x=TRUE)
+op2=merge(op1_1,freq.all, by.x="Row.names", by.y="Var1", all.x = TRUE)
 comb = combined[!duplicated(combined$dd),]
 op3=merge(op2,comb[,-c(1:3)],by.x="Row.names", by.y="dd",all.x=TRUE)
 
 op4 = op3[, -c(33:length(op3))]
 op5 = op3[, -c(1:32)]
-#op6 <- cbind(op4, op5[vapply(op5, function(x) length(unique(x)) > 1, logical(1L))])
-print(op5[vapply(op5, function(x) length(unique(x)) > 1, logical(1L))])
-#op6 <- cbind(op4, op5)
-if (!ncol(op5[vapply(op5, function(x) length(unique(x)) > 1, logical(1L))]) == 0){
+
+if (!ncol(op5[vapply(op5, function(x) length(unique(x)) > 1, logical(1L))]) == 3){
   op6 <- cbind(op4, op5[vapply(op5, function(x) length(unique(x)) > 1, logical(1L))])
 } else{
   op6 <- cbind(op4, op5)
 }
-#op4 <- op3[vapply(op3, function(x) length(unique(x)) > 1, logical(1L))]
+
 aa <- dplyr::distinct(op6, Row.names, .keep_all = TRUE)
 if (!is.null(aa)){
   write.table(format(op6,digits=3),paste0(sapply(strsplit(ped1, '-exon'), `[`, 1), "-Hap.xls"), quote=FALSE, sep="\t", row.names = FALSE)
