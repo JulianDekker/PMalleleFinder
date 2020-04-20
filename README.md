@@ -19,6 +19,7 @@ This pipeline will allow you to extract allele sequences and population informat
 * samtools=1.6
 * tabix=1.6
 * dplyr=0.8.5
+* tidyr
 	
 ## Setup
 Clone the project structure and run `main_pipe.py`
