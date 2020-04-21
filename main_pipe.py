@@ -23,20 +23,42 @@ def get_rss(genelist):
     for gene in genelist:
         boundaries = gene.get_gene_boundaries()
         if gene.get_name()[3] == 'V':
-            rsslist = rsslist + [(gene.get_name() + '_f_rss', (int(boundaries[1]), int(boundaries[1]) + 60,
+            if boundaries[2] == 1:
+                rsslist = rsslist + [(gene.get_name() + '_f_rss', (int(boundaries[1]), int(boundaries[1]) + 60,
                                                       gene.get_exons()[list(gene.get_exons().keys())[0]][2]),
-                                 'RSS', gene.get_chro(), "1")]
+                                 'RSS', gene.get_chro(), boundaries[2])]
+            else:
+                rsslist = rsslist + [(gene.get_name() + '_f_rss', (int(boundaries[0]) - 60, int(boundaries[0]),
+                                                                   gene.get_exons()[list(gene.get_exons().keys())[0]][
+                                                                       2]),
+                                      'RSS', gene.get_chro(), boundaries[2])]
         elif gene.get_name()[3] == 'J':
-            rsslist = rsslist + [(gene.get_name()+'_r_rss', (int(boundaries[0])-60, int(boundaries[0]),
+            if boundaries[2] == 1:
+                rsslist = rsslist + [(gene.get_name()+'_r_rss', (int(boundaries[0])-60, int(boundaries[0]),
                                                     gene.get_exons()[list(gene.get_exons().keys())[0]][2]),
                                  'RSS', gene.get_chro(), "1")]
+            else:
+                rsslist = rsslist + [(gene.get_name() + '_r_rss', (int(boundaries[1]), int(boundaries[1]) + 60,
+                                                                   gene.get_exons()[list(gene.get_exons().keys())[0]][
+                                                                       2]),
+                                      'RSS', gene.get_chro(), boundaries[2])]
         elif gene.get_name()[3] == 'D':
-            rsslist = rsslist + [(gene.get_name()+'_f_rss', (int(boundaries[0])-60, int(boundaries[0]),
+            if boundaries[2] == 1:
+                rsslist = rsslist + [(gene.get_name()+'_f_rss', (int(boundaries[0])-60, int(boundaries[0]),
                                                     gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS',
                                   gene.get_chro(), "1"),
                     (gene.get_name()+'_r_rss', (int(boundaries[1]), int(boundaries[1])+60,
                                                 gene.get_exons()[list(gene.get_exons().keys())[0]][2]), 'RSS',
-                     gene.get_chro(), "1")]
+                     gene.get_chro(), boundaries[2])]
+            else:
+                rsslist = rsslist + [(gene.get_name() + '_f_rss', (int(boundaries[1]), int(boundaries[1])+60,
+                                                                   gene.get_exons()[
+                                                                       list(gene.get_exons().keys())[0]][2]), 'RSS',
+                                      gene.get_chro(), "1"),
+                                     (gene.get_name() + '_r_rss', (int(boundaries[0])-60, int(boundaries[0]),
+                                                                   gene.get_exons()[
+                                                                       list(gene.get_exons().keys())[0]][2]), 'RSS',
+                                      gene.get_chro(), boundaries[2])]
     return rsslist
 
 

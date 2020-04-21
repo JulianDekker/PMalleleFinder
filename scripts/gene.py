@@ -20,18 +20,20 @@ class Gene:
         return self.chro
 
     def get_gene_boundaries(self):
-        exones = sorted(self.exons.keys())
-        startexon = exones[0]
-        endexon = exones[len(exones)-1]
-        if self.exons[startexon][0] < self.exons[startexon][1]:
-            startpos = self.exons[startexon][0]
-        else:
-            startpos = self.exons[startexon][1]
-        if self.exons[endexon][0] < self.exons[endexon][1]:
-            endpos = self.exons[endexon][1]
-        else:
-            endpos = self.exons[endexon][0]
-        return (startpos, endpos)
+        minpos = 9999999999999999999999
+        maxpos = 0
+        strand = 0
+        for _, pos in self.exons.items():
+            if minpos > int(pos[0]):
+                minpos = int(pos[0])
+            if maxpos < int(pos[0]):
+                maxpos = int(pos[0])
+            if minpos > int(pos[1]):
+                minpos = int(pos[1])
+            if maxpos < int(pos[1]):
+                maxpos = int(pos[1])
+            strand = pos[2]
+        return (minpos, maxpos, strand)
 
     def __str__(self):
         return 'Gene object. ' + self.get_name() + '. Exons: ' + str(len(self.get_exons().keys())) + '; ' + ';'.join(
