@@ -1,4 +1,4 @@
-# TR_diversity
+# PMalleleFinder
 
 ## Table of contents
 * [General info](#general-info)
